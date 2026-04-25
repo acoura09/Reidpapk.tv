@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <title>REI DO APK - IPTV Premium</title>
+    <script src="https://cdn.tailwindcss.com"></script> 
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        :root {
+            --config-fundo: url('https://i.supaimg.com/f39afda8-6b2e-4cf2-8ab9-b80ced5e2c75/ea4e5f51-4551-4889-85fd-ea25cfe87359.png');
+            --cor-dourado: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fcf6ba, #aa771c);
+        }
+        body { 
+            background-color: #0a0a0a;
+            background-image: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), var(--config-fundo);
+            background-size: cover; background-position: center; background-attachment: fixed;
+            color: #fff; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; 
+        }
+        #intro-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .intro-text { font-size: 4rem; font-weight: 900; background: var(--cor-dourado); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; animation: pullAndBurst 4s forwards; }
+        @keyframes pullAndBurst { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(15); opacity: 0; visibility: hidden; } }
+        
+        #btn-whatsapp { position: fixed; bottom: 80px; right: 20px; z-index: 50; background: #25d366; color: white; border-radius: 50%; width: 60px; height: 60px; display: none; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); animation: pulse-green 2s infinite; }
+        @keyframes pulse-green { 0% { transform: scale(0.95); } 70% { transform: scale(1); } 100% { transform: scale(0.95); } }
+
+        .category-card { background: rgba(255, 255, 255, 0.05); border: 2px solid #bf953f; backdrop-filter: blur(10px); border-radius: 50%; width: 110px; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
+        #player-overlay { position: fixed; inset: 0; background: #000; z-index: 1000; display: none; flex-direction: column; }
+        #marquee-player { width: 100%; background: linear-gradient(90deg, #e50914, #91060d); color: white; padding: 6px 0; font-weight: 900; overflow: hidden; white-space: nowrap; }
+        .marquee-content { display: inline-block; padding-left: 100%; animation: marquee-anim 15s linear infinite; }
+        @keyframes marquee-anim { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+        .ni.active { color: #bf953f; border-bottom: 3px solid #bf953f; }
+    </style>
+</head>
+<body class="pb-20 md:pb-0">
+
+    <div id="intro-screen"><div class="intro-text">REI DO APK</div></div>
+
+    <a id="btn-whatsapp" href="https://chat.whatsapp.com/SEU_LINK" target="_blank"><i data-lucide="message-circle" class="w-8 h-8"></i></a>
+
+    <nav class="fixed top-0 w-full z-40 bg-black/80 backdrop-blur-md border-b border-white/10 px-4 h-16 flex items-center justify-between">
+        <h1 class="text-red-600 text-2xl font-black cursor-pointer" onclick="sw('h')">REI DO<span class="text-white"> APK</span></h1>
+        <ul class="hidden md:flex gap-8 text-sm uppercase font-bold">
+            <li class="ni cursor-pointer" id="nav-h" onclick="sw('h')">Início</li>
+            <li class="ni cursor-pointer" id="nav-t" onclick="sw('t')">TV</li>
+            <li class="ni cursor-pointer" id="nav-m" onclick="sw('m')">Filmes</li>
+            <li class="ni cursor-pointer" id="nav-s" onclick="sw('s')">Séries</li>
+        </ul>
+    </nav>
+
+    <div id="player-overlay">
+        <div id="marquee-player"><div class="marquee-content">🚀 CONECTADO AO SERVIDOR REI DO APK - QUALIDADE 4K ULTRA HD 🚀</div></div>
+        <div class="flex items-center justify-between p-4 bg-[#0f0f0f]">
+            <h3 id="player-title" class="font-bold text-yellow-500 uppercase">IPTV PLAYER</h3>
+            <button onclick="closePlayer()" class="bg-red-600 px-6 py-2 rounded-full text-white font-bold text-xs">FECHAR</button>
+        </div>
+        <div class="flex-1 flex items-center justify-center bg-black">
+            <video id="video-element" class="w-full h-full" controls></video>
+        </div>
+    </div>
+
+    <div id="app" class="pt-24 px-4 md:px-10 min-h-screen">
+        <h2 id="section-title" class="text-2xl font-black mb-8 text-white uppercase border-l-4 border-yellow-600 pl-4">Carregando Servidor...</h2>
+        <div id="grid-content" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 justify-items-center"></div>
+    </div>
+
+    <div class="md:hidden fixed bottom-0 w-full bg-black/95 border-t border-white/10 z-40 flex justify-around p-3 text-gray-400">
+        <button onclick="sw('h')" id="mob-h"><i data-lucide="home"></i></button>
+        <button onclick="sw('t')" id="mob-t"><i data-lucide="tv"></i></button>
+        <button onclick="sw('m')" id="mob-m"><i data-lucide="film"></i></button>
+        <button onclick="sw('s')" id="mob-s"><i data-lucide="layers"></i></button>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        /* ========================================================
+           CONFIGURAÇÃO DO SEU SERVIDOR IPTV (API XTREAM CODES)
+           ======================================================== */
+        const IPTV_CONFIG = {
+            url: "http://p2toptz.shop", // Ex: http://reidoapk.com:8080
+            user: "carlos00006",
+            pass: "carlos00007"
+        };
+
+        let LISTA_TV = [], LISTA_FILMES = [], LISTA_SERIES = [];
+
+        async function carregarDados() {
+            const api = `${IPTV_CONFIG.url}/player_api.php?username=${IPTV_CONFIG.user}&password=${IPTV_CONFIG.pass}`;
+            try {
+                // Busca Canais, Filmes e Séries
+                const [tv, filmes, series] = await Promise.all([
+                    fetch(`${api}&action=get_live_streams`).then(r => r.json()),
+                    fetch(`${api}&action=get_vod_streams`).then(r => r.json()),
+                    fetch(`${api}&action=get_series`).then(r => r.json())
+                ]);
+                LISTA_TV = tv.slice(0, 50); // Pegando os 50 primeiros para não travar
+                LISTA_FILMES = filmes.slice(0, 50);
+                LISTA_SERIES = series.slice(0, 50);
+                sw('h');
+            } catch (e) {
+                document.getElementById('section-title').innerText = "Erro ao conectar no servidor!";
+            }
+        }
+
+        function sw(tab) {
+            const grid = document.getElementById('grid-content');
+            const title = document.getElementById('section-title');
+            grid.innerHTML = "";
+            document.querySelectorAll('.ni, .md\\:hidden button').forEach(el => el.classList.remove('active', 'text-yellow-500'));
+            document.getElementById('nav-' + tab)?.classList.add('active');
+            document.getElementById('mob-' + (tab === 's' ? 's' : tab))?.classList.add('text-yellow-500');
+
+            if (tab === 'h') {
+                title.innerText = "Rei do APK - Início";
+                grid.className = "flex flex-wrap justify-center gap-8";
+                grid.innerHTML = `
+                    <div onclick="sw('t')" class="category-card"><i data-lucide="tv" class="text-yellow-500 mb-2"></i><b>TV</b></div>
+                    <div onclick="sw('m')" class="category-card"><i data-lucide="film" class="text-yellow-500 mb-2"></i><b>FILMES</b></div>
+                    <div onclick="sw('s')" class="category-card"><i data-lucide="layers" class="text-red-600 mb-2"></i><b>SÉRIES</b></div>
+                `;
+                lucide.createIcons();
+            } else {
+                let data = tab === 't' ? LISTA_TV : tab === 'm' ? LISTA_FILMES : LISTA_SERIES;
+                title.innerText = tab === 't' ? "Canais de TV" : tab === 'm' ? "Filmes" : "Séries";
+                grid.className = "grid grid-cols-2 md:grid-cols-5 gap-4 w-full";
+                grid.innerHTML = data.map(item => {
+                    const id = item.stream_id || item.series_id;
+                    const type = tab === 't' ? 'live' : tab === 'm' ? 'movie' : 'series';
+                    return `
+                    <div onclick="playIPTV('${id}', '${type}', '${item.name || item.title}')" class="bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:border-yellow-500 transition overflow-hidden">
+                        <img src="${item.stream_icon || item.cover}" class="w-full ${tab === 't' ? 'h-32' : 'aspect-[2/3]'} object-cover" onerror="this.src='https://via.placeholder.com/300x450?text=Sem+Imagem'">
+                        <p class="text-center font-bold p-2 text-[10px] uppercase truncate">${item.name || item.title}</p>
+                    </div>`;
+                }).join('');
+            }
+        }
+
+        function playIPTV(id, tipo, nome) {
+            const overlay = document.getElementById('player-overlay');
+            const video = document.getElementById('video-element');
+            let ext = tipo === 'live' ? 'm3u8' : 'mp4';
+            let streamUrl = `${IPTV_CONFIG.url}/${tipo}/${IPTV_CONFIG.user}/${IPTV_CONFIG.pass}/${id}.${ext}`;
+
+            document.getElementById('player-title').innerText = nome;
+            overlay.style.display = "flex";
+
+            if (Hls.isSupported() && tipo === 'live') {
+                const hls = new Hls(); hls.loadSource(streamUrl); hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+            } else {
+                video.src = streamUrl;
+                video.play();
+            }
+        }
+
+        function closePlayer() {
+            const video = document.getElementById('video-element');
+            video.pause(); video.src = "";
+            document.getElementById('player-overlay').style.display = "none";
+        }
+
+        function falarBoasVindas() {
+            const msg = new SpeechSynthesisUtterance("Bem-vindo ao Rei do APK! Seu servidor está pronto.");
+            msg.lang = 'pt-BR';
+            window.speechSynthesis.speak(msg);
+        }
+
+        window.onload = () => {
+            carregarDados(); // Conecta no servidor assim que abre
+            setTimeout(() => {
+                document.getElementById('intro-screen').style.opacity = "0";
+                setTimeout(() => {
+                    document.getElementById('intro-screen').remove();
+                    falarBoasVindas();
+                    setTimeout(() => document.getElementById('btn-whatsapp').style.display = "flex", 60000);
+                }, 800);
+            }, 4000);
+        };
+    </script>
+</body>
+</html>
